@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Secrets files
+secrets.h
+secrets.py 
