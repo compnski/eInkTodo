@@ -1,0 +1,13 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP E-InkScreen
+D Connector for E-ink screen
+K connector
+F ~
+$ENDCMP
+#
+$CMP Heltec_Wifi_Kit_32_V2
+D Heltec Wifi Kit 32 v2
+$ENDCMP
+#
+#End Doc Library
