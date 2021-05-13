@@ -28,3 +28,16 @@ You'll also need the ESP32 SDK and the waveshare SDK -- I used instructions from
 
 ## Troubleshooting
 The wifi only seems to connect like 1 in 100 times. It worked great in the prototype step, now, not so much. Good luck!
+
+## TODO
+
+1. Fetch temp / weather ?
+1. Look into adding lines across for style
+1. Checkmark for completed tasks
+1. Red color for overdue tasks
+1. Read buttons for done
+1. Flash LED on overdue
+1. Fix spacing and all that
+1. Speaker / sound
+1. Neopixels on top
+1. Korean word of the day?? (First todo?)

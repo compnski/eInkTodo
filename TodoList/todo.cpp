@@ -2,7 +2,11 @@
 
 const String TASK_SEPARATOR = " ||| ";
 
-TodoList::TodoList(const char *taskURL) : taskURL(taskURL), numClientTasks(0) {}
+TodoList::TodoList(const char *taskURL) : taskURL(taskURL), numClientTasks(0) {
+  for (int i = 0; i < MAX_DISPLAYED_TASKS; i++) {
+    this->taskList[i] = null;
+  }
+}
 
 boolean assertState(SEQUENCE_STATE currentState, SEQUENCE_STATE expectedState) {
   if (currentState != expectedState) {
@@ -89,35 +93,43 @@ int TodoList::processTaskLine(String line, int index) {
   if (!assertState(this->state, SEQ_READING_BODY)) {
     return -1;
   }
-
+  if (this->taskList[index] != null) {
+    delete(this->taskList[index]);
+  }
   this->taskList[index] = new Task(line);
   return 0;
 }
 
+String nextItem(String line, int offset) {
+  int sepIndex = line.indexOf(TASK_SEPARATOR);
+  return line.substring(offset, sepIndex);
+}
+
 Task::Task(String line) {
-  int titleSepIndex = line.indexOf(TASK_SEPARATOR);
-  if (titleSepIndex >= 0) {
-    printf("Title sep at %d, got %s\n", titleSepIndex,
-           line.substring(0, titleSepIndex).c_str());
+  // Todo Task 2 ||| 0 ||| 1620845100 ||| 1620848700 ||| 1dadttb4r0b1pc21p2ijm66apk@google.com
+  int nextOffset = 0;
 
-    this->title = line.substring(0, titleSepIndex);
-    this->title.replace("||||||", "|||");
+  this->title = nextItem(line, 0);
+  nextOffset += this->title.length();
+  this->title.replace("||||||", "|||");
+  
+  String doneStr = nextItem(line, nextOffset);
+  this->isDone = doneStr.toInt();
+  nextOffset += doneStr.length();
 
-    int doneSepIndex = line.indexOf(TASK_SEPARATOR, titleSepIndex + 1);
-    if (doneSepIndex >= 0) {
+  String startAtStr = nextItem(line, nextOffset);
+  this->startAtTs =startAtStr.toInt();
+  nextOffset += startAtStr.length();
 
-      printf("Done sep at %d, got %s\n", doneSepIndex,
-             line.substring(titleSepIndex + 4, doneSepIndex).c_str());
+  String dueAtStr = nextItem(line, nextOffset);
+  this->dueAtTs =dueAtStr.toInt();
+  nextOffset += dueAtStr.length();
 
-      this->isDone = line.substring(titleSepIndex + 4, doneSepIndex).toInt();
+  this->eventId = nextItem(line, 0);
+}
 
-      int dueAtSepIndex = line.indexOf(TASK_SEPARATOR, doneSepIndex + 1);
-      if (dueAtSepIndex >= 0) {
-        printf("DueAt TS %s\n", line.substring(dueAtSepIndex + 4).c_str());
-        this->dueAtTs = line.substring(dueAtSepIndex + 4).toInt();
-      }
-    }
-  }
+bool Task::isOverdue(int currentTime) {
+  return currentTime > dueAtTs;
 }
 
 void TodoList::cleanupRequest(HttpClient *client) {
