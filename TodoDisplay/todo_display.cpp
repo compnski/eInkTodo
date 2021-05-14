@@ -11,8 +11,8 @@
 TodoDisplay::TodoDisplay(TodoList &list) : TodoDisplay(&list) {}
 TodoDisplay::TodoDisplay(TodoList *list) : todoList(list) {}
 
-const int TASK_TOP_OFFSET = 100;
-const int TASK_LINE_HEIGHT = 95;
+const int TASK_TOP_OFFSET = 50;
+const int TASK_LINE_HEIGHT = 107;
 
 void TodoDisplay::drawTasks() {
   printf("Draw tasks\n");
@@ -47,8 +47,8 @@ void TodoDisplay::drawFrame() {
   Paint_SelectImage(BlackImage);
   Paint_Clear(WHITE);
 
-  Paint_DrawLine(0, 30, Paint.Width, 30, BLACK, DOT_PIXEL_1X1,
-                 LINE_STYLE_SOLID);
+  // Paint_DrawLine(0, 30, Paint.Width, 30, BLACK, DOT_PIXEL_1X1,
+  //                  LINE_STYLE_SOLID);
   Paint_DrawLine(0, 850, Paint.Width, 850, BLACK, DOT_PIXEL_1X1,
                  LINE_STYLE_SOLID);
   Paint_DrawString_EN(200, 865, WiFi.localIP().toString().c_str(), &Font12,
