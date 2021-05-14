@@ -34,8 +34,8 @@ protected:
                   int redirectCount);
   int connectSSLClientForURL(String url);
   void resetSSLClient();
+  int waitForData(int waitMillis);
 };
 
 String parseLocationHeader(String header);
-
 #endif // __HTTP_CLIENT_H_

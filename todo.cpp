@@ -1,30 +1,25 @@
+
+// My Libs
+#include <todo_display.h>
+#include <todo.h>
 #include <HttpClient.h>
+
+// System Libs
 #include <SSLClient.h>
-
-//#define MBEDTLS_DEBUG_C 1
-
-#include "Client.h"
-#include "DEV_Config.h"
-#include "EPD.h"
-#include "GUI_Paint.h"
-#include "mbedtls/debug.h"
 #include <WiFi.h>
 #include <stdlib.h>
 
-#include "eink.h"
-#include "todo.h"
-//#include "trust_anchor.h"
+// Arduino lib
+#include "Client.h"
 
-// const char *ssid;
-// const char *password;
-// const char *taskURL;
+// Secrets
 #include "secrets.h"
-
-// Create a new image cache
-UBYTE *BlackImage, *RYImage;
 
 WiFiClient base_client;
 TodoList todo(taskURL);
+TodoDisplay display(todo);
+
+static const int WIFI_ATTEMPTS = 100;
 
 int setupWifi() {
   if (WiFi.isConnected()) {
@@ -36,7 +31,7 @@ int setupWifi() {
   WiFi.begin(ssid, password);
   WiFi.setAutoConnect(true);
 
-  for (int attempt = 0; attempt < 50 && WiFi.status() != WL_CONNECTED;
+  for (int attempt = 0; attempt < WIFI_ATTEMPTS && WiFi.status() != WL_CONNECTED;
        attempt++) {
     delay(500);
     printf(".");
@@ -55,28 +50,39 @@ int setupWifi() {
   return 0;
 }
 
-// TODO: Fetch temp / weather ?
-// TODO: Look into adding lines across for style
-// TODO: Checkmark for completed tasks
-// TODO: Red color for overdue tasks
-// TODO: Read buttons for done
-// TODO: Flash LED on overdue
-// TODO: Fix spacing and all that
-// TODO: Speaker / sound
-// TODO: Neopixels on top
-// TODO: Korean word of the day?? (First todo?)
 
-bool button0Pressed = false;
-void IRAM_ATTR pushButton0Pressed() { button0Pressed = true; }
+bool taskButton[MAX_DISPLAYED_TASKS];
 
-const int PushButton0 = 36;
-const int Led0 = 32;
+void IRAM_ATTR pushButton0Pressed() { taskButton[0] = true; }
+void IRAM_ATTR pushButton1Pressed() { taskButton[1] = true; }
+void IRAM_ATTR pushButton2Pressed() { taskButton[2] = true; }
+void IRAM_ATTR pushButton3Pressed() { taskButton[3] = true; }
+void IRAM_ATTR pushButton4Pressed() { taskButton[4] = true; }
+void IRAM_ATTR pushButton5Pressed() { taskButton[5] = true; }
+void IRAM_ATTR pushButton6Pressed() { taskButton[6] = true; }
+void IRAM_ATTR pushButton7Pressed() { taskButton[7] = true; }
+
+typedef void (*FP)();
+const FP PushButtonCbs[MAX_DISPLAYED_TASKS]= {&pushButton0Pressed,
+  &pushButton1Pressed,
+  &pushButton2Pressed,
+  &pushButton3Pressed,
+  &pushButton4Pressed,
+  &pushButton5Pressed,
+  &pushButton6Pressed,
+  &pushButton7Pressed};
+
+const int PushButtonPins[MAX_DISPLAYED_TASKS] = {36, 36, 36, 36, 36, 36, 36, 36};
+//const int LedPins[MAX_DISPLAYED_TASKS] = {32, 32, 32, 32, 32, 32, 32, 32};
+
 void setupButtons() {
-  pinMode(PushButton0, INPUT);
-  attachInterrupt(PushButton0, pushButton0Pressed, RISING);
+  for ( int i = 0; i < MAX_DISPLAYED_TASKS; i++ ){
+    pinMode(PushButtonPins[i], INPUT);
+    attachInterrupt(PushButtonPins[i], PushButtonCbs[i], RISING);
 
-  pinMode(Led0, OUTPUT);
-  digitalWrite(Led0, 0);
+    //pinMode(LedPins[i], OUTPUT);
+    //digitalWrite(LedPins[i], 0);
+  }
 }
 
 int getTasks() {
@@ -101,96 +107,6 @@ int getTasks() {
   return -1;
 }
 
-void cleanupEInk() {
-  printf("Goto Sleep...\r\n");
-  EPD_7IN5B_HD_Sleep();
-  free(BlackImage);
-  free(RYImage);
-  BlackImage = NULL;
-  RYImage = NULL;
-}
-
-void setupEInk() {
-  DEV_Module_Init();
-  printf("EPD_7IN5B_HD_test Demo\r\n");
-  printf("e-Paper Init and Clear...\r\n");
-  EPD_7IN5B_HD_Init();
-  EPD_7IN5B_HD_Clear();
-  DEV_Delay_ms(500);
-  printf("Set rotate\n");
-
-  /* you have to edit the startup_stm32fxxx.s file and set a big enough heap
-   * size */
-  UWORD Imagesize =
-      ((EPD_7IN5B_HD_WIDTH % 8 == 0) ? (EPD_7IN5B_HD_WIDTH / 8)
-                                     : (EPD_7IN5B_HD_WIDTH / 8 + 1)) *
-      EPD_7IN5B_HD_HEIGHT;
-  if ((BlackImage = (UBYTE *)malloc(Imagesize)) == NULL) {
-    printf("Failed to apply for black memory...\r\n");
-    while (1)
-      ;
-  }
-  if ((RYImage = (UBYTE *)malloc(Imagesize)) == NULL) {
-    printf("Failed to apply for red memory...\r\n");
-    while (1)
-      ;
-  }
-  printf("NewImage:BlackImage and RYImage\r\n");
-  Paint_NewImage(BlackImage, EPD_7IN5B_HD_WIDTH, EPD_7IN5B_HD_HEIGHT, ROTATE_90,
-                 WHITE);
-  Paint_NewImage(RYImage, EPD_7IN5B_HD_WIDTH, EPD_7IN5B_HD_HEIGHT, ROTATE_90,
-                 WHITE);
-
-  Paint_SelectImage(RYImage);
-  Paint_Clear(WHITE);
-  Paint_SelectImage(BlackImage);
-  Paint_Clear(WHITE);
-}
-
-void drawFrame() {
-  Paint_SelectImage(RYImage);
-  Paint_Clear(WHITE);
-  Paint_SelectImage(BlackImage);
-  Paint_Clear(WHITE);
-
-  Paint_DrawLine(0, 30, Paint.Width, 30, BLACK, DOT_PIXEL_1X1,
-                 LINE_STYLE_SOLID);
-  Paint_DrawLine(0, 850, Paint.Width, 850, BLACK, DOT_PIXEL_1X1,
-                 LINE_STYLE_SOLID);
-  Paint_DrawString_EN(200, 865, WiFi.localIP().toString().c_str(), &Font12,
-                      BLACK, WHITE);
-}
-
-void drawTasks() {
-  // Select Image
-
-  printf("Draw words\n");
-  for (int i = 0; i < todo.numClientTasks; i += 1) {
-    Paint_SelectImage(BlackImage);
-
-    int y = i * 95 + 100;
-    Task *task = todo.taskList[i];
-    if (i == 0 && task->isDone == 0) {
-      digitalWrite(Led0, 1);
-      Paint_SelectImage(RYImage);
-    }
-
-    printf("Draw at (%d, 10)\n", y);
-    // Paint_DrawString_EN(0, y, "<", &Font24, BLACK, WHITE);
-    Paint_DrawRectangle(30, y, 50, y + 20, BLACK, DOT_PIXEL_1X1,
-                        DRAW_FILL_EMPTY);
-    Paint_DrawString_EN(60, y, task->title.c_str(), &Font24, BLACK, WHITE);
-
-    if (task->isDone == 1) {
-      Paint_DrawLine(55, y + 12, Paint.Width - 5, y + 12, BLACK, DOT_PIXEL_1X1,
-                     LINE_STYLE_SOLID);
-      Paint_DrawString_EN(31, y, "x", &Font20, BLACK, WHITE);
-    }
-  }
-}
-
-// Paint_DrawNum(10, 50, 987654321, &Font16, WHITE, BLACK);
-
 void setup() {
   setupButtons();
 
@@ -198,31 +114,36 @@ void setup() {
   if (err < 0) {
     printf("Failed wifi :(");
   }
-  setupEInk();
 
-  // get time, tasks and other info
+  display.setup();
+}
 
-  // EPD_7IN5_HD_Clear();
-  ///  DEV_Delay_ms(10000);
+void markDoneRPC(String eventId){
+  printf("Marking done %s\n", eventId.c_str());
+#if 0
+  HttpClient http(base_client);
+  int err = http.get("http://192.168.2.84/done/0");
+  if (err < 0) {
+    printf("Failed to mark task done");
+  }
+#endif
 
-  // cleanupEInk();
 }
 
 void checkButtons() {
-  if (button0Pressed) {
-    printf("Button0 was pressed!\n");
-    button0Pressed = false;
-    HttpClient http(base_client);
-    int err = http.get("http://192.168.2.84/done/0");
-    if (err < 0) {
-      printf("Failed to mark task done");
+  bool anyChange = false;
+  for (int i = 0; i < MAX_DISPLAYED_TASKS; i++){
+    if ( taskButton[i] ) {
+      printf("Button %d pressed\n", i);
+      markDoneRPC(todo.taskList[i]->eventId);
+      todo.taskList[0]->isDone = 1;
+      taskButton[i] = false;
+      anyChange = true;
     }
-    todo.taskList[0]->isDone = 1;
-    drawFrame();
-    drawTasks();
+  }
 
-    printf("EPD_Display\r\n");
-    EPD_7IN5B_HD_Display(BlackImage, RYImage);
+  if ( anyChange ) {
+    display.render();
   }
 }
 
@@ -255,8 +176,5 @@ int updateTasks() {
     printf("Failed to get tasks\n");
     return -1;
   }
-  drawFrame();
-  drawTasks();
-  printf("EPD_Display\r\n");
-  EPD_7IN5B_HD_Display(BlackImage, RYImage);
+  display.render();
 }

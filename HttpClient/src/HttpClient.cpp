@@ -3,6 +3,7 @@
 #include <SSLClient.h>
 
 #include "trust_anchor.h"
+
 String parseLocationHeader(String header) {
   // TODO: Length checks
   // Location:
@@ -74,24 +75,19 @@ int HttpClient::makeRequest(String url, Verb verb, const char *formData,
       break;
     }
     // Wait for response data
-    unsigned long timeout = millis();
-    while (baseClient->available() == 0) {
-      if (millis() - timeout > 5000) {
-        printf(">>> Client Timeout (headers) !\n");
-        stop();
-        return -1;
-      }
+    if (int ret = waitForData(5000) < 0) {
+      return ret;
     }
 
     String line = baseClient->readStringUntil('\n');
     printf("header line? [%s]\n", line.c_str());
-    // printf("%x\n", line.c_str()[0]);
 
+    // Check for redirects
     if (line.startsWith("Location:") || line.startsWith("location:")) {
       location = parseLocationHeader(line);
     }
     if (line == "\r") {
-      printf("headers received\n");
+      printf("headers finished\n");
       break;
     }
     if (line.isEmpty()) {
@@ -99,6 +95,7 @@ int HttpClient::makeRequest(String url, Verb verb, const char *formData,
       break;
     }
   }
+  printf("Exiting Header Area\n");
   if (!location.isEmpty()) {
     if (redirectCount > MAX_REDIRECT_COUNT) {
       printf("Max redirect exceeded");
@@ -107,8 +104,9 @@ int HttpClient::makeRequest(String url, Verb verb, const char *formData,
     stop();
     printf("Following Location: header to %s\n", location.c_str());
     return makeRequest(location, verb, formData, redirectCount + 1);
+  } else {
+    printf("no redirect\n");
   }
-  printf("Exiting Header Area\n");
   if (baseClient->connected()) {
     printf("disconnected :(");
     return 0;
@@ -117,15 +115,23 @@ int HttpClient::makeRequest(String url, Verb verb, const char *formData,
   }
 }
 
-String HttpClient::readLine() {
+int HttpClient::waitForData(int waitMillis) {
   unsigned long timeout = millis();
   while (baseClient->available() == 0) {
-    if (millis() - timeout > 5000) {
-      printf(">>> Client Timeout (readline) !\n");
+    if (millis() - timeout > waitMillis) {
+      printf(">>> Client Timeout (headers) !\n");
       stop();
-      String ret;
-      return ret;
+      return -1;
     }
+  }
+  return 0;
+}
+
+String HttpClient::readLine() {
+  unsigned long timeout = millis();
+  if (waitForData(5000) < 0) {
+    String ret;
+    return ret;
   }
 
   return baseClient->readStringUntil('\n');

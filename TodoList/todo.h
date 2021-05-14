@@ -10,8 +10,12 @@ public:
   Task(String line);
 
   String title;
+  String eventId;
   int dueAtTs;
+  int startAtTs;
   int isDone;
+
+  bool isOverdue(int currenTimestamp);
 };
 
 typedef enum {
