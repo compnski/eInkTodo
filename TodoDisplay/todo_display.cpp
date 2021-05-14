@@ -5,21 +5,24 @@
 #include "GUI_Paint.h"
 #include "eink.h"
 
-TodoDisplay::TodoDisplay(TodoList &list, int &LedPins[MAX_DISPLAYED_TASKS]) : TodoDisplay(&list, LedPins) {}
-TodoDisplay::TodoDisplay(TodoList *list, int &LedPins[MAX_DISPLAYED_TASKS]) : TodoList(list), LedPins(LedPins) {}
+// TODO: Pass in IP info
+#include <WiFi.h>
+
+TodoDisplay::TodoDisplay(TodoList &list) : TodoDisplay(&list) {}
+TodoDisplay::TodoDisplay(TodoList *list) : todoList(list) {}
 
 const int TASK_TOP_OFFSET = 100;
 const int TASK_LINE_HEIGHT = 95;
 
 void TodoDisplay::drawTasks() {
   printf("Draw tasks\n");
-  for (int i = 0; i < todoList.numClientTasks; i += 1) {
+  for (int i = 0; i < todoList->numClientTasks; i += 1) {
     Paint_SelectImage(BlackImage);
 
     int y = i * TASK_LINE_HEIGHT + TASK_TOP_OFFSET;
-    Task *task = todoList.taskList[i];
-    if (task->isOverdue(todoList.lastTimestamp) == 0) {
-      digitalWrite(Led0, 1);
+    Task *task = todoList->taskList[i];
+    if (task->isOverdue(todoList->lastTimestamp) == 0) {
+      // digitalWrite(Led0, 1);
       Paint_SelectImage(RYImage);
     }
 
@@ -36,7 +39,6 @@ void TodoDisplay::drawTasks() {
     }
   }
 }
-
 
 void TodoDisplay::drawFrame() {
   printf("Draw frame\n");
@@ -69,7 +71,6 @@ void TodoDisplay::cleanup() {
   BlackImage = NULL;
   RYImage = NULL;
 }
-
 
 void TodoDisplay::setup() {
   DEV_Module_Init();

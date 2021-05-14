@@ -4,7 +4,7 @@ const String TASK_SEPARATOR = " ||| ";
 
 TodoList::TodoList(const char *taskURL) : taskURL(taskURL), numClientTasks(0) {
   for (int i = 0; i < MAX_DISPLAYED_TASKS; i++) {
-    this->taskList[i] = null;
+    this->taskList[i] = NULL;
   }
 }
 
@@ -93,8 +93,8 @@ int TodoList::processTaskLine(String line, int index) {
   if (!assertState(this->state, SEQ_READING_BODY)) {
     return -1;
   }
-  if (this->taskList[index] != null) {
-    delete(this->taskList[index]);
+  if (this->taskList[index] != NULL) {
+    delete (this->taskList[index]);
   }
   this->taskList[index] = new Task(line);
   return 0;
@@ -106,31 +106,30 @@ String nextItem(String line, int offset) {
 }
 
 Task::Task(String line) {
-  // Todo Task 2 ||| 0 ||| 1620845100 ||| 1620848700 ||| 1dadttb4r0b1pc21p2ijm66apk@google.com
+  // Todo Task 2 ||| 0 ||| 1620845100 ||| 1620848700 |||
+  // 1dadttb4r0b1pc21p2ijm66apk@google.com
   int nextOffset = 0;
 
   this->title = nextItem(line, 0);
   nextOffset += this->title.length();
   this->title.replace("||||||", "|||");
-  
+
   String doneStr = nextItem(line, nextOffset);
   this->isDone = doneStr.toInt();
   nextOffset += doneStr.length();
 
   String startAtStr = nextItem(line, nextOffset);
-  this->startAtTs =startAtStr.toInt();
+  this->startAtTs = startAtStr.toInt();
   nextOffset += startAtStr.length();
 
   String dueAtStr = nextItem(line, nextOffset);
-  this->dueAtTs =dueAtStr.toInt();
+  this->dueAtTs = dueAtStr.toInt();
   nextOffset += dueAtStr.length();
 
   this->eventId = nextItem(line, 0);
 }
 
-bool Task::isOverdue(int currentTime) {
-  return currentTime > dueAtTs;
-}
+bool Task::isOverdue(int currentTime) { return currentTime > dueAtTs; }
 
 void TodoList::cleanupRequest(HttpClient *client) {
   client->stop();

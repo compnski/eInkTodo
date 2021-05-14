@@ -1,21 +1,25 @@
-#include <HttpClient.h>
-#include <SSLClient.h>
 
-#include "Client.h"
+// My Libs
+#include <todo_display.h>
+#include <todo.h>
+#include <HttpClient.h>
+
+// System Libs
+#include <SSLClient.h>
 #include <WiFi.h>
 #include <stdlib.h>
 
-#include "todo.h"
+// Arduino lib
+#include "Client.h"
 
+// Secrets
 #include "secrets.h"
-
-//#include "mbedtls/debug.h"
-
-// Create a new image cache
 
 WiFiClient base_client;
 TodoList todo(taskURL);
-TodoDisplay display(todo, LedPins);
+TodoDisplay display(todo);
+
+static const int WIFI_ATTEMPTS = 100;
 
 int setupWifi() {
   if (WiFi.isConnected()) {
@@ -27,7 +31,7 @@ int setupWifi() {
   WiFi.begin(ssid, password);
   WiFi.setAutoConnect(true);
 
-  for (int attempt = 0; attempt < 50 && WiFi.status() != WL_CONNECTED;
+  for (int attempt = 0; attempt < WIFI_ATTEMPTS && WiFi.status() != WL_CONNECTED;
        attempt++) {
     delay(500);
     printf(".");
@@ -69,15 +73,15 @@ const FP PushButtonCbs[MAX_DISPLAYED_TASKS]= {&pushButton0Pressed,
   &pushButton7Pressed};
 
 const int PushButtonPins[MAX_DISPLAYED_TASKS] = {36, 36, 36, 36, 36, 36, 36, 36};
-const int LedPins[MAX_DISPLAYED_TASKS] = {32, 32, 32, 32, 32, 32, 32, 32};
+//const int LedPins[MAX_DISPLAYED_TASKS] = {32, 32, 32, 32, 32, 32, 32, 32};
 
 void setupButtons() {
   for ( int i = 0; i < MAX_DISPLAYED_TASKS; i++ ){
     pinMode(PushButtonPins[i], INPUT);
     attachInterrupt(PushButtonPins[i], PushButtonCbs[i], RISING);
 
-    pinMode(LedPins[i], OUTPUT);
-    digitalWrite(LedPins[i], 0);
+    //pinMode(LedPins[i], OUTPUT);
+    //digitalWrite(LedPins[i], 0);
   }
 }
 
@@ -122,7 +126,7 @@ void markDoneRPC(String eventId){
   if (err < 0) {
     printf("Failed to mark task done");
   }
-#end
+#endif
 
 }
 
@@ -130,8 +134,8 @@ void checkButtons() {
   bool anyChange = false;
   for (int i = 0; i < MAX_DISPLAYED_TASKS; i++){
     if ( taskButton[i] ) {
-      printf("Button %d pressed\n", i)
-      markDoneRPC(todo.taskList[i].eventId);
+      printf("Button %d pressed\n", i);
+      markDoneRPC(todo.taskList[i]->eventId);
       todo.taskList[0]->isDone = 1;
       taskButton[i] = false;
       anyChange = true;

@@ -3,6 +3,7 @@
 #include <SSLClient.h>
 
 #include "trust_anchor.h"
+
 String parseLocationHeader(String header) {
   // TODO: Length checks
   // Location:
@@ -74,7 +75,7 @@ int HttpClient::makeRequest(String url, Verb verb, const char *formData,
       break;
     }
     // Wait for response data
-    if (int ret = waitForData(5000) < 0){
+    if (int ret = waitForData(5000) < 0) {
       return ret;
     }
 
