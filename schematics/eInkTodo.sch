@@ -708,10 +708,10 @@ P_PAGE
 Text Label 8700 2850 0    50   ~ 0
 N_PAGE
 $Comp
-L schematics:E-InkScreen EINK_CONN
+L schematics:E-InkScreen EINK_CONN1
 U 1 1 608B208A
 P 8500 5550
-F 0 "EINK_CONN" V 8441 5938 50  0000 L CNN
+F 0 "EINK_CONN1" V 8441 5938 50  0000 L CNN
 F 1 "E-InkScreen" V 8532 5938 50  0000 L CNN
 F 2 "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Horizontal" H 8500 5550 50  0001 C CNN
 F 3 "~" H 8500 5550 50  0001 C CNN
@@ -1077,10 +1077,10 @@ F 3 "~" H 5000 6000 50  0001 C CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L Connector_Generic:Conn_01x04 GND
+L Connector_Generic:Conn_01x04 GND1
 U 1 1 60FA9AE0
 P 5000 6500
-F 0 "GND" V 4872 6680 50  0000 L CNN
+F 0 "GND1" V 4872 6680 50  0000 L CNN
 F 1 "BREAD GND" V 4963 6680 50  0000 L CNN
 F 2 "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical" H 5000 6500 50  0001 C CNN
 F 3 "~" H 5000 6500 50  0001 C CNN

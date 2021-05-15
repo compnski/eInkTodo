@@ -17,10 +17,10 @@
 
 WiFiClient base_client;
 TodoList todo(taskURL);
-const uint8_t ledAddressPins[3] = {0, 0, 0};
-const uint8_t ledDataPin = 0;
-const uint8_t ledEnablePin = 0;
-const uint8_t ledResetPin = 0;
+const uint8_t ledAddressPins[3] = {18, 23, 19};
+const uint8_t ledDataPin = 22;
+const uint8_t ledEnablePin = 5;
+const uint8_t ledResetPin = 17;
 
 Latch latch(ledAddressPins, ledDataPin, ledEnablePin, ledResetPin);
 TodoDisplay display(todo, latch);
@@ -73,8 +73,8 @@ const FP PushButtonCbs[MAX_DISPLAYED_TASKS] = {
     &pushButton3Pressed, &pushButton4Pressed, &pushButton5Pressed,
     &pushButton6Pressed, &pushButton7Pressed};
 
-const int PushButtonPins[MAX_DISPLAYED_TASKS] = {36, 36, 36, 36,
-                                                 36, 36, 36, 36};
+const int PushButtonPins[MAX_DISPLAYED_TASKS] = {36, 37, 38, 39,
+                                                 34, 35, 32, 33};
 // const int LedPins[MAX_DISPLAYED_TASKS] = {32, 32, 32, 32, 32, 32,
 // 32, 32};
 
