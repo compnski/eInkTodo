@@ -1,8 +1,8 @@
 
 // My Libs
-#include <todo_display.h>
-#include <todo.h>
 #include <HttpClient.h>
+#include <todo.h>
+#include <todo_display.h>
 
 // System Libs
 #include <SSLClient.h>
@@ -17,7 +17,13 @@
 
 WiFiClient base_client;
 TodoList todo(taskURL);
-TodoDisplay display(todo);
+const uint8_t ledAddressPins[3] = {0, 0, 0};
+const uint8_t ledDataPin = 0;
+const uint8_t ledEnablePin = 0;
+const uint8_t ledResetPin = 0;
+
+Latch latch(ledAddressPins, ledDataPin, ledEnablePin, ledResetPin);
+TodoDisplay display(todo, latch);
 
 static const int WIFI_ATTEMPTS = 100;
 
@@ -31,8 +37,8 @@ int setupWifi() {
   WiFi.begin(ssid, password);
   WiFi.setAutoConnect(true);
 
-  for (int attempt = 0; attempt < WIFI_ATTEMPTS && WiFi.status() != WL_CONNECTED;
-       attempt++) {
+  for (int attempt = 0;
+       attempt < WIFI_ATTEMPTS && WiFi.status() != WL_CONNECTED; attempt++) {
     delay(500);
     printf(".");
     if (attempt % 10 == 0) {
@@ -50,7 +56,6 @@ int setupWifi() {
   return 0;
 }
 
-
 bool taskButton[MAX_DISPLAYED_TASKS];
 
 void IRAM_ATTR pushButton0Pressed() { taskButton[0] = true; }
@@ -63,25 +68,23 @@ void IRAM_ATTR pushButton6Pressed() { taskButton[6] = true; }
 void IRAM_ATTR pushButton7Pressed() { taskButton[7] = true; }
 
 typedef void (*FP)();
-const FP PushButtonCbs[MAX_DISPLAYED_TASKS]= {&pushButton0Pressed,
-  &pushButton1Pressed,
-  &pushButton2Pressed,
-  &pushButton3Pressed,
-  &pushButton4Pressed,
-  &pushButton5Pressed,
-  &pushButton6Pressed,
-  &pushButton7Pressed};
+const FP PushButtonCbs[MAX_DISPLAYED_TASKS] = {
+    &pushButton0Pressed, &pushButton1Pressed, &pushButton2Pressed,
+    &pushButton3Pressed, &pushButton4Pressed, &pushButton5Pressed,
+    &pushButton6Pressed, &pushButton7Pressed};
 
-const int PushButtonPins[MAX_DISPLAYED_TASKS] = {36, 36, 36, 36, 36, 36, 36, 36};
-//const int LedPins[MAX_DISPLAYED_TASKS] = {32, 32, 32, 32, 32, 32, 32, 32};
+const int PushButtonPins[MAX_DISPLAYED_TASKS] = {36, 36, 36, 36,
+                                                 36, 36, 36, 36};
+// const int LedPins[MAX_DISPLAYED_TASKS] = {32, 32, 32, 32, 32, 32,
+// 32, 32};
 
 void setupButtons() {
-  for ( int i = 0; i < MAX_DISPLAYED_TASKS; i++ ){
+  for (int i = 0; i < MAX_DISPLAYED_TASKS; i++) {
     pinMode(PushButtonPins[i], INPUT);
     attachInterrupt(PushButtonPins[i], PushButtonCbs[i], RISING);
 
-    //pinMode(LedPins[i], OUTPUT);
-    //digitalWrite(LedPins[i], 0);
+    // pinMode(LedPins[i], OUTPUT);
+    // digitalWrite(LedPins[i], 0);
   }
 }
 
@@ -118,22 +121,20 @@ void setup() {
   display.setup();
 }
 
-void markDoneRPC(String eventId){
+const String doneURL = "http://192.168.2.84/done/";
+void markDoneRPC(String eventId) {
   printf("Marking done %s\n", eventId.c_str());
-#if 0
   HttpClient http(base_client);
-  int err = http.get("http://192.168.2.84/done/0");
+  int err = http.get((doneURL + eventId).c_str());
   if (err < 0) {
     printf("Failed to mark task done");
   }
-#endif
-
 }
 
 void checkButtons() {
   bool anyChange = false;
-  for (int i = 0; i < MAX_DISPLAYED_TASKS; i++){
-    if ( taskButton[i] ) {
+  for (int i = 0; i < MAX_DISPLAYED_TASKS; i++) {
+    if (taskButton[i]) {
       printf("Button %d pressed\n", i);
       markDoneRPC(todo.taskList[i]->eventId);
       todo.taskList[0]->isDone = 1;
@@ -142,13 +143,14 @@ void checkButtons() {
     }
   }
 
-  if ( anyChange ) {
+  if (anyChange) {
     display.render();
   }
 }
 
 long lastGotTasks = 0;
-/* The main loop -------------------------------------------------------------*/
+/* The main loop
+ * -------------------------------------------------------------*/
 void loop() {
   checkButtons();
   if (millis() - lastGotTasks > 60 * 1000) {
