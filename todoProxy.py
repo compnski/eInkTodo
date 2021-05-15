@@ -20,7 +20,8 @@ class MyServer(BaseHTTPRequestHandler):
 
         if "/done/" in self.path:
             print("Got done request")
-            requests.get(taskURL+"?done=5a9o76ubee84pe2i78g0bhs4p2@google.com")
+            eventId = self.path.split("/done/")[1]
+            requests.get(taskURL+"?done=" + eventId)
             self.wfile.write(bytes("DONE\n", "utf-8"))
         else:
             self.return_tasks()
