@@ -85,6 +85,7 @@ int TodoList::processDateLine(String line) {
   this->lastTimestamp = line.substring(0, firstSpace).toInt();
   this->lastTimestring = line.substring(firstSpace);
   this->lastTimestring.trim();
+  printf("Current time is %s (%d)\n", lastTimestring, lastTimestamp);
   return 0;
 }
 
@@ -101,7 +102,7 @@ int TodoList::processTaskLine(String line, int index) {
 }
 
 String nextItem(String line, int offset) {
-  int sepIndex = line.indexOf(TASK_SEPARATOR);
+  int sepIndex = line.indexOf(TASK_SEPARATOR, offset);
   return line.substring(offset, sepIndex);
 }
 
@@ -111,22 +112,25 @@ Task::Task(String line) {
   int nextOffset = 0;
 
   this->title = nextItem(line, 0);
-  nextOffset += this->title.length();
+  nextOffset += this->title.length() + 5;
   this->title.replace("||||||", "|||");
 
   String doneStr = nextItem(line, nextOffset);
   this->isDone = doneStr.toInt();
-  nextOffset += doneStr.length();
+  nextOffset += doneStr.length() + 5;
 
   String startAtStr = nextItem(line, nextOffset);
   this->startAtTs = startAtStr.toInt();
-  nextOffset += startAtStr.length();
+  nextOffset += startAtStr.length() + 5;
 
   String dueAtStr = nextItem(line, nextOffset);
   this->dueAtTs = dueAtStr.toInt();
-  nextOffset += dueAtStr.length();
+  nextOffset += dueAtStr.length() + 5;
 
-  this->eventId = nextItem(line, 0);
+  this->eventId = nextItem(line, nextOffset);
+  printf("Parsed Task strings %s, %s, %s, %s %s\n", this->title.c_str(),
+         doneStr.c_str(), startAtStr.c_str(), dueAtStr.c_str(),
+         this->eventId.c_str());
 }
 
 bool Task::isOverdue(int currentTime) { return currentTime > dueAtTs; }

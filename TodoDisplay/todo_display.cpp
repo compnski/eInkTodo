@@ -15,13 +15,15 @@ const int TASK_TOP_OFFSET = 50;
 const int TASK_LINE_HEIGHT = 107;
 
 void TodoDisplay::drawTasks() {
-  printf("Draw tasks\n");
+  printf("Draw  tasks for %d \n", todoList->lastTimestamp);
   for (int i = 0; i < todoList->numClientTasks; i += 1) {
     Paint_SelectImage(BlackImage);
 
     int y = i * TASK_LINE_HEIGHT + TASK_TOP_OFFSET;
     Task *task = todoList->taskList[i];
-    if (task->isOverdue(todoList->lastTimestamp) == 0) {
+    printf("Task %s startAt %d dueAt %d ", task->title.c_str(), task->startAtTs,
+           task->dueAtTs);
+    if (task->isOverdue(todoList->lastTimestamp)) {
       // digitalWrite(Led0, 1);
       Paint_SelectImage(RYImage);
     }
